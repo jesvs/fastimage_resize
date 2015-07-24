@@ -152,9 +152,13 @@ class FastImage
           default: return Qnil;
         }
 
+        int originalWidth  = gdImageSX(im_in);
+        int originalHeight = gdImageSY(im_in);
+
+        int crop = 1;
+
         if (w == 0 || h == 0) {
-          int originalWidth  = gdImageSX(im_in);
-          int originalHeight = gdImageSY(im_in);
+          crop = 0;
           if (w == 0) {
             w = (int)(h * originalWidth / originalHeight);
           } else {
@@ -170,11 +174,26 @@ class FastImage
         }
         
         fclose(in);
+
+        int sX = 0;
+        int sY = 0;
+        float srcRatio = originalWidth / (float)originalHeight;
+        float destRatio = w / (float)h;
+
+        if (crop) {
+          if (srcRatio > 1) {
+            sX = (originalWidth - originalHeight) / 2;
+            originalWidth = originalHeight;
+          } else {
+            sY = (originalHeight - originalWidth) / 2;
+            originalHeight = originalWidth;
+          }
+        }
         
         /* Now copy the original */
-        gdImageCopyResampled(im_out, im_in, 0, 0, 0, 0,
+        gdImageCopyResampled(im_out, im_in, 0, 0, sX, sY,
           gdImageSX(im_out), gdImageSY(im_out),
-          gdImageSX(im_in), gdImageSY(im_in));
+          originalWidth, originalHeight);
 
         out = fopen(filename_out, "wb");
         if (out) {
